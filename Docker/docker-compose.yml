@@ -1,0 +1,35 @@
+version: '3.7'
+services:
+  netbootxyz:
+    image: linuxserver/netbootxyz:latest
+    container_name: netbootxyz
+    hostname: netbootxyz
+    restart: unless-stopped
+    volumes:
+      - ../Data/config:/config
+      - ../Data/assets:/assets
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+      - MENU_VERSION=1.9.9 #optional
+    labels:
+      # Traefik Labels
+      - "traefik.enable=true"
+      # Asset Hosting
+      - "traefik.http.routers.netboot-pxe.rule=Host(`localhost`)" # PXE Domain Name e.g. pxe.example.com
+      - "traefik.http.routers.netboot-pxe.entrypoints=web-secure"
+      - "traefik.http.routers.netboot-pxe.service=netboot-pxe"
+      - "traefik.http.routers.netboot-pxe.tls=true"
+      - "traefik.http.services.netboot-pxe.loadbalancer.server.port=80"
+      # Netboot Admin
+      - "traefik.http.routers.netboot-admin.rule=Host(`localhost`)" # PXE Domain Name e.g. netboot.example.com
+      - "traefik.http.routers.netboot-admin.entrypoints=web-secure"
+      - "traefik.http.routers.netboot-admin.tls=true"
+      - "traefik.http.routers.netboot-admin.middlewares=default-headers@file"
+      - "traefik.http.routers.netboot-admin.service=netboot-admin"
+      - "traefik.http.services.netboot-admin.loadbalancer.server.port=3000"
+      # Netboot TFTP
+      - "traefik.udp.routers.netboot.entrypoints=netboot"
+      - "traefik.udp.routers.netboot.service=netboot"
+      - "traefik.udp.services.netboot.loadbalancer.server.port=69"
